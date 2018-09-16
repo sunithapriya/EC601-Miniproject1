@@ -25,7 +25,7 @@ def get_all_tweets(screen_name):
                            exclude_replies=True)
 	#twitter api allows a max of 200 tweets per user
 	#the below code helps in fetching all tweets by changing the max_id after every fetch
-	last_id = tweets[-1].id
+	#last_id = tweets[-1].id
  
 	# while (True):
 	# 	get_tweets = api.user_timeline(screen_name = screen_name,count=200,include_rts=False,exclude_replies=True,max_id=last_id-1)
