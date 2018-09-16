@@ -5,6 +5,7 @@
 import tweepy
 from tweepy import OAuthHandler
 import os
+import wget
 
 #Twitter API credentials
 consumer_key = "FVqVunV6OkKDtJ8HlSFvpBF3W"
@@ -29,15 +30,32 @@ def get_all_tweets(screen_name):
  
 	# while (True):
 	# 	get_tweets = api.user_timeline(screen_name = screen_name,count=200,include_rts=False,exclude_replies=True,max_id=last_id-1)
-	# 	# There are no more tweets
+	# 	# There are no more get_tweets
 	# 	if (len(get_tweets) == 0):
 	# 		break
 	# 	else:
 	# 		last_id = get_tweets[-1].id-1
 	# 		tweets = tweets + get_tweets  
-
 	print(tweets)
+	media_files = set()
+	for status in tweets:
+		media = status.entities.get('media', [])
+		if(len(media) > 0):
+			media_files.add(media[0]['media_url'])
+	print(media_files)
 
+	if not os.path.exists("images"):
+		os.makedirs("images")
+	num = 1
+	
+
+	for media_file in media_files:
+		numstr = str(num)
+		file_name = os.path.split(media_file)[1]
+		output_folder = "images"
+		if not os.path.exists(os.path.join(output_folder, file_name)):
+			wget.download(media_file +":orig", out=output_folder+'/'+file_name)
+			num+= 1
 
 if __name__ == '__main__':
     #pass in the username of the account you want to download
