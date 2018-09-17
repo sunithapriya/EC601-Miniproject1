@@ -6,6 +6,8 @@ import tweepy
 from tweepy import OAuthHandler
 import os
 import wget
+import ffmpeg
+import sys
 
 #Twitter API credentials
 consumer_key = "FVqVunV6OkKDtJ8HlSFvpBF3W"
@@ -36,26 +38,39 @@ def get_all_tweets(screen_name):
 	# 	else:
 	# 		last_id = get_tweets[-1].id-1
 	# 		tweets = tweets + get_tweets  
-	print(tweets)
 	media_files = set()
 	for status in tweets:
 		media = status.entities.get('media', [])
 		if(len(media) > 0):
 			media_files.add(media[0]['media_url'])
-	print(media_files)
+	#print(media_files)
 
 	if not os.path.exists("images"):
 		os.makedirs("images")
+	else:
+		folder = 'images'
+		for the_file in os.listdir(folder):
+			file_path = os.path.join(folder, the_file)
+			try:
+				if os.path.isfile(file_path):
+					os.unlink(file_path)
+			except Exception as e:
+				print(e)
 	num = 1
 	
 
 	for media_file in media_files:
 		numstr = str(num)
 		file_name = os.path.split(media_file)[1]
+		ext_name = file_name.split(".")
+		file_name = "images"+numstr+"."+ext_name[1]
 		output_folder = "images"
 		if not os.path.exists(os.path.join(output_folder, file_name)):
 			wget.download(media_file +":orig", out=output_folder+'/'+file_name)
 			num+= 1
+
+	os.system("ffmpeg -r 1 -i images/images%d.jpg -vcodec mpeg4 -y movie.mp4")
+
 
 if __name__ == '__main__':
     #pass in the username of the account you want to download
