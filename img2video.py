@@ -9,6 +9,8 @@ import wget
 import ffmpeg
 import sys
 
+#testbranch1
+
 #Twitter API credentials
 consumer_key = "FVqVunV6OkKDtJ8HlSFvpBF3W"
 consumer_secret = "nXCK8IgaWvbv3zJAxuQAw7lyooWzHZJCjrnFTvZFk7f2Ssf7vU"
@@ -72,6 +74,54 @@ def get_all_tweets(screen_name):
 	os.system("ffmpeg -r 1 -i images/images%d.jpg -vcodec mpeg4 -y movie.mp4")
 
 
+from google.cloud import videointelligence
+
+video_client = videointelligence.VideoIntelligenceServiceClient()
+features = [videointelligence.enums.Feature.LABEL_DETECTION]
+operation = video_client.annotate_video(
+	'gs://demomaker/cat.mp4', features=features)
+print('\nProcessing video for label annotations:')
+
+result = operation.result(timeout=90)
+print('\nFinished processing.')
+
+# first result is retrieved because a single video was processed
+segment_labels = result.annotation_results[0].segment_label_annotations
+for i, segment_label in enumerate(segment_labels):
+	print('Video label description: {}'.format(
+		segment_label.entity.description))
+	for category_entity in segment_label.category_entities:
+		print('\tLabel category description: {}'.format(
+			category_entity.description))
+
+	for i, segment in enumerate(segment_label.segments):
+		start_time = (segment.segment.start_time_offset.seconds +
+			segment.segment.start_time_offset.nanos / 1e9)
+		end_time = (segment.segment.end_time_offset.seconds +
+			segment.segment.end_time_offset.nanos / 1e9)
+		positions = '{}s to {}s'.format(start_time, end_time)
+		confidence = segment.confidence
+		print('\tSegment {}: {}'.format(i, positions))
+		print('\tConfidence: {}'.format(confidence))
+	print('\n')
+	
+from google.cloud import storage
+
+# Instantiates a client
+storage_client = storage.Client()
+bucket = storage_client.get_bucket("twittervideobucket")
+blobs = bucket.list_blobs()
+# for blob in blobs:
+# 	print("in blob\n")
+# 	print(blob.name)
+blob = bucket.blob('movie.mp4')
+
+blob.upload_from_filename('movie.mp4')
+
+print('File {} uploaded to {}.'.format(
+	'movie.mp4',
+	'movie.mp4'))
+
 if __name__ == '__main__':
     #pass in the username of the account you want to download
-    get_all_tweets("NatGeo")
+    get_all_tweets("NatGeoPhotos")
