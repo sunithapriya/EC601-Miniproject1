@@ -72,14 +72,30 @@ def get_all_tweets(screen_name):
 			num+= 1
 
 	os.system("ffmpeg -r 1 -i images/images%d.jpg -vcodec mpeg4 -y movie.mp4")
+	
+from google.cloud import storage
 
+# Instantiates a client
+storage_client = storage.Client()
+bucket = storage_client.get_bucket("twittervideobucket")
+blobs = bucket.list_blobs()
+# for blob in blobs:
+# 	print("in blob\n")
+# 	print(blob.name)
+blob = bucket.blob('movie.mp4')
+
+blob.upload_from_filename('movie.mp4')
+
+print('File {} uploaded to {}.'.format(
+	'movie.mp4',
+	'movie.mp4'))
 
 from google.cloud import videointelligence
 
 video_client = videointelligence.VideoIntelligenceServiceClient()
 features = [videointelligence.enums.Feature.LABEL_DETECTION]
 operation = video_client.annotate_video(
-	'gs://demomaker/cat.mp4', features=features)
+	'gs://twittervideobucket/movie.mp4', features=features)
 print('\nProcessing video for label annotations:')
 
 result = operation.result(timeout=90)
@@ -104,24 +120,7 @@ for i, segment_label in enumerate(segment_labels):
 		print('\tSegment {}: {}'.format(i, positions))
 		print('\tConfidence: {}'.format(confidence))
 	print('\n')
-	
-from google.cloud import storage
-
-# Instantiates a client
-storage_client = storage.Client()
-bucket = storage_client.get_bucket("twittervideobucket")
-blobs = bucket.list_blobs()
-# for blob in blobs:
-# 	print("in blob\n")
-# 	print(blob.name)
-blob = bucket.blob('movie.mp4')
-
-blob.upload_from_filename('movie.mp4')
-
-print('File {} uploaded to {}.'.format(
-	'movie.mp4',
-	'movie.mp4'))
 
 if __name__ == '__main__':
     #pass in the username of the account you want to download
-    get_all_tweets("NatGeoPhotos")
+    get_all_tweets("instagram")
