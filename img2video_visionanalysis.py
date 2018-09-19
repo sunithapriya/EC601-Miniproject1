@@ -13,10 +13,10 @@ import io
 #testbranch1
 
 #Twitter API credentials
-consumer_key = "FVqVunV6OkKDtJ8HlSFvpBF3W"
-consumer_secret = "nXCK8IgaWvbv3zJAxuQAw7lyooWzHZJCjrnFTvZFk7f2Ssf7vU"
-access_key = "1040679655936798720-zE0fXGtzffQcazoHaZ3Mag5kSY6BAz"
-access_secret = "omB1rnUwejSwORV4S4H4buZA2BXLV6437eYzQDn2lPyFg"
+consumer_key = "Enter Consumer Key here"
+consumer_secret = "Enter Consumer Secret here"
+access_key = "Enter Access Key here"
+access_secret = "Enter Acess Secret here"
 
 
 
@@ -36,6 +36,7 @@ def create_dir(dir_name):
 				print(e)
 
 def get_image_url(tweets):
+	#Get images from the tweets
 	media_files = set()
 	for status in tweets:
 		media = status.entities.get('media', [])
@@ -129,4 +130,4 @@ if __name__ == '__main__':
     #pass in the username of the account you want to download
 
 
-    get_all_tweets("Instagram")
+    get_all_tweets("NatGeoPhotos")
