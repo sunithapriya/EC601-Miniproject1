@@ -17,6 +17,86 @@ consumer_secret = "nXCK8IgaWvbv3zJAxuQAw7lyooWzHZJCjrnFTvZFk7f2Ssf7vU"
 access_key = "1040679655936798720-zE0fXGtzffQcazoHaZ3Mag5kSY6BAz"
 access_secret = "omB1rnUwejSwORV4S4H4buZA2BXLV6437eYzQDn2lPyFg"
 
+
+
+def create_dir(dir_name):
+	#Make an Image directory to save images from tweets
+	if not os.path.exists(dir_name):
+		os.makedirs(dir_name)
+	else:
+		#If directory exists, clear its contents to save the downloaded images
+		folder = dir_name
+		for the_file in os.listdir(folder):
+			file_path = os.path.join(folder, the_file)
+			try:
+				if os.path.isfile(file_path):
+					os.unlink(file_path)
+			except Exception as e:
+				print(e)
+
+def get_image_url(tweets):
+	media_files = set()
+	for status in tweets:
+		media = status.entities.get('media', [])
+		if(len(media) > 0):
+			media_files.add(media[0]['media_url'])
+	return media_files
+
+def download_images(media_files):
+	num = 1
+	for media_file in media_files:
+		numstr = str(num)
+		file_name = os.path.split(media_file)[1]
+		ext_name = file_name.split(".")
+		file_name = "images"+numstr+"."+ext_name[1]
+		output_folder = "images"
+		if not os.path.exists(os.path.join(output_folder, file_name)):
+			wget.download(media_file +":orig", out=output_folder+'/'+file_name)
+			num+= 1
+
+def convert_images_to_video(screen_name):
+	os.system("ffmpeg -r 1/2 -i images/images%d.jpg -vcodec mpeg4 -y "+screen_name+".mp4")
+
+def store_video_gs(screen_name):
+	video_name = screen_name+".mp4"
+	from google.cloud import storage
+	# Instantiates a client
+	storage_client = storage.Client()
+	bucket = storage_client.get_bucket("twittervideobucket")
+	# blob_name = bucket.blob("movie.mp4")
+	# blob_name.delete()
+	blob = bucket.blob(video_name)
+	blob.upload_from_filename(video_name)
+	print('File {} uploaded to {}.'.format(
+	video_name,
+	video_name))
+
+def process_video_google_vi(screen_name):
+	video_name = screen_name+".mp4"
+	from google.cloud import videointelligence
+	video_client = videointelligence.VideoIntelligenceServiceClient()
+	features = [videointelligence.enums.Feature.LABEL_DETECTION]
+	operation = video_client.annotate_video('gs://twittervideobucket/'+video_name, features=features)
+	print('\nProcessing video for label annotations:')
+	result = operation.result(timeout=90)
+	print('\nFinished processing.')
+	# first result is retrieved because a single video was processed
+	segment_labels = result.annotation_results[0].segment_label_annotations
+	for i, segment_label in enumerate(segment_labels):
+		print('Video label description: {}'.format(segment_label.entity.description))
+		for category_entity in segment_label.category_entities:
+			print('\tLabel category description: {}'.format(category_entity.description))
+
+		for i, segment in enumerate(segment_label.segments):
+			start_time = (segment.segment.start_time_offset.seconds + segment.segment.start_time_offset.nanos / 1e9)
+			end_time = (segment.segment.end_time_offset.seconds +
+			segment.segment.end_time_offset.nanos / 1e9)
+			positions = '{}s to {}s'.format(start_time, end_time)
+			confidence = segment.confidence
+			print('\tSegment {}: {}'.format(i, positions))
+			print('\tConfidence: {}'.format(confidence))
+		print('\n')
+
 def get_all_tweets(screen_name):
 	#Authorise twitter
 	auth = OAuthHandler(consumer_key, consumer_secret)
@@ -40,87 +120,17 @@ def get_all_tweets(screen_name):
 	# 	else:
 	# 		last_id = get_tweets[-1].id-1
 	# 		tweets = tweets + get_tweets  
-	media_files = set()
-	for status in tweets:
-		media = status.entities.get('media', [])
-		if(len(media) > 0):
-			media_files.add(media[0]['media_url'])
-	#print(media_files)
-
-	if not os.path.exists("images"):
-		os.makedirs("images")
-	else:
-		folder = 'images'
-		for the_file in os.listdir(folder):
-			file_path = os.path.join(folder, the_file)
-			try:
-				if os.path.isfile(file_path):
-					os.unlink(file_path)
-			except Exception as e:
-				print(e)
-	num = 1
 	
 
-	for media_file in media_files:
-		numstr = str(num)
-		file_name = os.path.split(media_file)[1]
-		ext_name = file_name.split(".")
-		file_name = "images"+numstr+"."+ext_name[1]
-		output_folder = "images"
-		if not os.path.exists(os.path.join(output_folder, file_name)):
-			wget.download(media_file +":orig", out=output_folder+'/'+file_name)
-			num+= 1
-
-	os.system("ffmpeg -r 1 -i images/images%d.jpg -vcodec mpeg4 -y movie.mp4")
-	
-from google.cloud import storage
-
-# Instantiates a client
-storage_client = storage.Client()
-bucket = storage_client.get_bucket("twittervideobucket")
-blobs = bucket.list_blobs()
-# for blob in blobs:
-# 	print("in blob\n")
-# 	print(blob.name)
-blob = bucket.blob('movie.mp4')
-
-blob.upload_from_filename('movie.mp4')
-
-print('File {} uploaded to {}.'.format(
-	'movie.mp4',
-	'movie.mp4'))
-
-from google.cloud import videointelligence
-
-video_client = videointelligence.VideoIntelligenceServiceClient()
-features = [videointelligence.enums.Feature.LABEL_DETECTION]
-operation = video_client.annotate_video(
-	'gs://twittervideobucket/movie.mp4', features=features)
-print('\nProcessing video for label annotations:')
-
-result = operation.result(timeout=90)
-print('\nFinished processing.')
-
-# first result is retrieved because a single video was processed
-segment_labels = result.annotation_results[0].segment_label_annotations
-for i, segment_label in enumerate(segment_labels):
-	print('Video label description: {}'.format(
-		segment_label.entity.description))
-	for category_entity in segment_label.category_entities:
-		print('\tLabel category description: {}'.format(
-			category_entity.description))
-
-	for i, segment in enumerate(segment_label.segments):
-		start_time = (segment.segment.start_time_offset.seconds +
-			segment.segment.start_time_offset.nanos / 1e9)
-		end_time = (segment.segment.end_time_offset.seconds +
-			segment.segment.end_time_offset.nanos / 1e9)
-		positions = '{}s to {}s'.format(start_time, end_time)
-		confidence = segment.confidence
-		print('\tSegment {}: {}'.format(i, positions))
-		print('\tConfidence: {}'.format(confidence))
-	print('\n')
+	create_dir("images")
+	media_files = get_image_url(tweets)
+	download_images(media_files)
+	convert_images_to_video(screen_name)
+	store_video_gs(screen_name)
+	process_video_google_vi(screen_name)
 
 if __name__ == '__main__':
     #pass in the username of the account you want to download
-    get_all_tweets("instagram")
+
+
+    get_all_tweets("NatGeoPhotos")
