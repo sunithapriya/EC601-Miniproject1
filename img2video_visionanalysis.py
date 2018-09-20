@@ -13,10 +13,10 @@ import io
 #testbranch1
 
 #Twitter API credentials
-consumer_key = "FVqVunV6OkKDtJ8HlSFvpBF3W"
-consumer_secret = "nXCK8IgaWvbv3zJAxuQAw7lyooWzHZJCjrnFTvZFk7f2Ssf7vU"
-access_key = "1040679655936798720-zE0fXGtzffQcazoHaZ3Mag5kSY6BAz"
-access_secret = "omB1rnUwejSwORV4S4H4buZA2BXLV6437eYzQDn2lPyFg"
+consumer_key = "Enter Consumer Key"
+consumer_secret = "Enter Consumer Secret"
+access_key = "Enter Access Key"
+access_secret = "Enter Access Secret"
 
 
 
@@ -44,56 +44,47 @@ def get_image_url(tweets):
 			media_files.add(media[0]['media_url'])
 	return media_files
 
-def download_images(media_files):
+def download_images(media_files,dir_name):
+	#Download the images from the image url
+	#Store the images with same name follwed by number to provide input for ffmpeg
 	num = 1
 	for media_file in media_files:
 		numstr = str(num)
 		file_name = os.path.split(media_file)[1]
 		ext_name = file_name.split(".")
 		file_name = "images"+numstr+"."+ext_name[1]
-		output_folder = "images"
+		output_folder = dir_name
 		if not os.path.exists(os.path.join(output_folder, file_name)):
 			wget.download(media_file +":orig", out=output_folder+'/'+file_name)
 			num+= 1
 
 def convert_images_to_video(screen_name):
+	#Using ffmpeg to convert images to video.
 	os.system("ffmpeg -loglevel panic -r 1/2 -i images/images%d.jpg -vcodec mpeg4 -y "+screen_name+".mp4")
 
-def store_video_gs(screen_name):
-	video_name = screen_name+".mp4"
-	from google.cloud import storage
-	# Instantiates a client
-	storage_client = storage.Client()
-	bucket = storage_client.get_bucket("twittervideobucket")
-	# blob_name = bucket.blob("movie.mp4")
-	# blob_name.delete()
-	blob = bucket.blob(video_name)
-	blob.upload_from_filename(video_name)
-	print('File {} uploaded to {}.'.format(
-	video_name,
-	video_name))
 
-def process_images_visionapi():
+def process_images_visionapi(dir_name):
+	#Google APi for processing images
 	from google.cloud import vision
 	from google.cloud.vision import types
 	# Instantiates a client
 	client = vision.ImageAnnotatorClient()
 	# The name of the image file to annotate
-	images_to_analyse = os.listdir("images")
+	images_to_analyse = os.listdir(dir_name)
 	for l in images_to_analyse:
 		file_name = os.path.join(os.path.dirname(__file__),'images/'+l)
 		# Loads the image into memory
 		with io.open(file_name, 'rb') as image_file:
 			content = image_file.read()
-    	image = types.Image(content=content)
-    	# Performs label detection on the image file
-    	response = client.label_detection(image=image)
-    	labels = response.label_annotations
-    	print('Labels:')
-    	for label in labels:
-    		print(label.description)
+		image = types.Image(content=content)
+		# Performs label detection on the image file
+		response = client.label_detection(image=image)
+		labels = response.label_annotations
+		print('Label for file_name:'+file_name)
+		for label in labels:
+			print(label.description)
 
-def get_all_tweets(screen_name):
+def get_tweets(screen_name):
 	#Authorise twitter
 	auth = OAuthHandler(consumer_key, consumer_secret)
 	auth.set_access_token(access_key, access_secret)
@@ -105,9 +96,16 @@ def get_all_tweets(screen_name):
                            count=200, include_rts=False,
                            exclude_replies=True)
 	#twitter api allows a max of 200 tweets per user
+	#the below code helps fetches 400 tweets 
+	# 	count = 1
+	# while (count == 2):
+	# 	get_tweets = api.user_timeline(screen_name = screen_name,count=200,include_rts=False,exclude_replies=True,max_id=last_id-1)
+	# 	count += 1
+	# return tweets
+	#twitter api allows a max of 200 tweets per user
 	#the below code helps in fetching all tweets by changing the max_id after every fetch
+	#The below code fetches all tweets
 	#last_id = tweets[-1].id
- 
 	# while (True):
 	# 	get_tweets = api.user_timeline(screen_name = screen_name,count=200,include_rts=False,exclude_replies=True,max_id=last_id-1)
 	# 	# There are no more get_tweets
@@ -116,18 +114,16 @@ def get_all_tweets(screen_name):
 	# 	else:
 	# 		last_id = get_tweets[-1].id-1
 	# 		tweets = tweets + get_tweets  
-	
-
-	create_dir("images")
-	media_files = get_image_url(tweets)
-	download_images(media_files)
-	process_images_visionapi()
-	convert_images_to_video(screen_name)
-	store_video_gs(screen_name)
-	#process_video_google_vi(screen_name)
+	return tweets
 
 if __name__ == '__main__':
     #pass in the username of the account you want to download
-
-
-    get_all_tweets("NatGeoPhotos")
+    screen_name = "NatGeoPhotos"
+    tweets = get_tweets(screen_name)
+    #Enter directory name to store images
+    dir_name = "images"
+    create_dir(dir_name)
+    media_files = get_image_url(tweets)
+    download_images(media_files,dir_name)
+    convert_images_to_video(screen_name)
+    process_images_visionapi(dir_name)
