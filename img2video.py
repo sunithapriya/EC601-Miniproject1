@@ -9,15 +9,11 @@ import wget
 import ffmpeg
 import sys
 
-#testbranch1
-
 #Twitter API credentials
-consumer_key = "FVqVunV6OkKDtJ8HlSFvpBF3W"
-consumer_secret = "nXCK8IgaWvbv3zJAxuQAw7lyooWzHZJCjrnFTvZFk7f2Ssf7vU"
-access_key = "1040679655936798720-zE0fXGtzffQcazoHaZ3Mag5kSY6BAz"
-access_secret = "omB1rnUwejSwORV4S4H4buZA2BXLV6437eYzQDn2lPyFg"
-
-
+consumer_key = "Enter Consumer Key"
+consumer_secret = "Enter Consumer Secret"
+access_key = "Enter Access Key"
+access_secret = "Enter Access Secret"
 
 def create_dir(dir_name):
 	#Make an Image directory to save images from tweets
@@ -43,22 +39,26 @@ def get_image_url(tweets):
 			media_files.add(media[0]['media_url'])
 	return media_files
 
-def download_images(media_files):
+def download_images(media_files,dir_name):
+	#Download the images from the image url
+	#Store the images with same name follwed by number to provide input for ffmpeg
 	num = 1
 	for media_file in media_files:
 		numstr = str(num)
 		file_name = os.path.split(media_file)[1]
 		ext_name = file_name.split(".")
 		file_name = "images"+numstr+"."+ext_name[1]
-		output_folder = "images"
+		output_folder = dir_name
 		if not os.path.exists(os.path.join(output_folder, file_name)):
 			wget.download(media_file +":orig", out=output_folder+'/'+file_name)
 			num+= 1
 
-def convert_images_to_video(screen_name):
-	os.system("ffmpeg -loglevel panic -r 1/2 -i images/images%d.jpg -vcodec mpeg4 -y "+screen_name+".mp4")
+def convert_images_to_video(screen_name,dir_name):
+	#Convert images to video using ffmpeg
+	os.system("ffmpeg -loglevel panic -r 1/2 -i "+dir_name+"/images%d.jpg -vcodec mpeg4 -y "+screen_name+".mp4")
 
 def store_video_gs(screen_name):
+	#Store video to Google Storage 
 	video_name = screen_name+".mp4"
 	from google.cloud import storage
 	# Instantiates a client
@@ -71,6 +71,7 @@ def store_video_gs(screen_name):
 	video_name))
 
 def process_video_google_vi(screen_name):
+	#Process video from Google Storage
 	video_name = screen_name+".mp4"
 	from google.cloud import videointelligence
 	video_client = videointelligence.VideoIntelligenceServiceClient()
@@ -96,7 +97,7 @@ def process_video_google_vi(screen_name):
 			print('\tConfidence: {}'.format(confidence))
 		print('\n')
 
-def get_all_tweets(screen_name):
+def get_tweets(screen_name):
 	#Authorise twitter
 	auth = OAuthHandler(consumer_key, consumer_secret)
 	auth.set_access_token(access_key, access_secret)
@@ -119,17 +120,17 @@ def get_all_tweets(screen_name):
 	# 	else:
 	# 		last_id = get_tweets[-1].id-1
 	# 		tweets = tweets + get_tweets  
-	
-
-	create_dir("images")
-	media_files = get_image_url(tweets)
-	download_images(media_files)
-	convert_images_to_video(screen_name)
-	store_video_gs(screen_name)
-	process_video_google_vi(screen_name)
+	return tweets
 
 if __name__ == '__main__':
     #pass in the username of the account you want to download
-
-
-    get_all_tweets("NatGeoPhotos")
+    screen_name = "NatGeoPhotos"
+    tweets = get_tweets(screen_name)
+    #Enter directory name to store images
+    dir_name = "images"
+    create_dir(dir_name)
+    media_files = get_image_url(tweets)
+    download_images(media_files,dir_name)
+    convert_images_to_video(screen_name,dir_name)
+    store_video_gs(screen_name)
+    process_video_google_vi(screen_name)

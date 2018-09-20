@@ -54,9 +54,9 @@ def download_images(media_files,dir_name):
 			wget.download(media_file +":orig", out=output_folder+'/'+file_name)
 			num+= 1
 
-def convert_images_to_video(screen_name):
+def convert_images_to_video(screen_name,dir_name):
 	#Using ffmpeg to convert images to video.
-	os.system("ffmpeg -loglevel panic -r 1/2 -i images/images%d.jpg -vcodec mpeg4 -y "+screen_name+".mp4")
+	os.system("ffmpeg -loglevel panic -r 1/2 -i "+dir_name+"/images%d.jpg -vcodec mpeg4 -y "+screen_name+".mp4")
 
 def process_images_visionapi(dir_name):
 	#Google APi for processing images
@@ -120,5 +120,5 @@ if __name__ == '__main__':
     create_dir(dir_name)
     media_files = get_image_url(tweets)
     download_images(media_files,dir_name)
-    convert_images_to_video(screen_name)
+    convert_images_to_video(screen_name,dir_name)
     process_images_visionapi(dir_name)
