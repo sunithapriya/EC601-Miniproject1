@@ -10,15 +10,11 @@ import ffmpeg
 import sys
 import io
 
-#testbranch1
-
 #Twitter API credentials
 consumer_key = "Enter Consumer Key"
 consumer_secret = "Enter Consumer Secret"
 access_key = "Enter Access Key"
 access_secret = "Enter Access Secret"
-
-
 
 def create_dir(dir_name):
 	#Make an Image directory to save images from tweets
@@ -61,7 +57,6 @@ def download_images(media_files,dir_name):
 def convert_images_to_video(screen_name):
 	#Using ffmpeg to convert images to video.
 	os.system("ffmpeg -loglevel panic -r 1/2 -i images/images%d.jpg -vcodec mpeg4 -y "+screen_name+".mp4")
-
 
 def process_images_visionapi(dir_name):
 	#Google APi for processing images
