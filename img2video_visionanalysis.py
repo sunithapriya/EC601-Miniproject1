@@ -13,10 +13,10 @@ import io
 #testbranch1
 
 #Twitter API credentials
-consumer_key = "Enter Consumer Key here"
-consumer_secret = "Enter Consumer Secret here"
-access_key = "Enter Access Key here"
-access_secret = "Enter Acess Secret here"
+consumer_key = "FVqVunV6OkKDtJ8HlSFvpBF3W"
+consumer_secret = "nXCK8IgaWvbv3zJAxuQAw7lyooWzHZJCjrnFTvZFk7f2Ssf7vU"
+access_key = "1040679655936798720-zE0fXGtzffQcazoHaZ3Mag5kSY6BAz"
+access_secret = "omB1rnUwejSwORV4S4H4buZA2BXLV6437eYzQDn2lPyFg"
 
 
 
@@ -57,7 +57,7 @@ def download_images(media_files):
 			num+= 1
 
 def convert_images_to_video(screen_name):
-	os.system("ffmpeg -r 1/2 -i images/images%d.jpg -vcodec mpeg4 -y "+screen_name+".mp4")
+	os.system("ffmpeg -loglevel panic -r 1/2 -i images/images%d.jpg -vcodec mpeg4 -y "+screen_name+".mp4")
 
 def store_video_gs(screen_name):
 	video_name = screen_name+".mp4"
