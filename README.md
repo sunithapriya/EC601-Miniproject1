@@ -1,6 +1,11 @@
 # miniproject
 Mini Project for EC601
 
-img2video.py is implemented using Google Video Intelligence Api.
+A library that downloads images from a twitter feed, converts them to a video and describes the content of the images in the video.
 
-img2video_visionanalysis.py is implemented using Google Vision Analysis Api.
+Used:
+1. Twitter API to access the twitter content
+2. FFMPEG to convert images to videos
+3a. Google Vision Analysis to describe the content
+3b. Google Video Intelligence to describe the content 
+
