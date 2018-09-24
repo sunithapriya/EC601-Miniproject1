@@ -1,4 +1,4 @@
-#Twitter Images to Video Annotator
+# Twitter Images to Video Annotator
 Mini Project for EC601
 
 A library that downloads images from a twitter feed, converts them to a video and describes the content of the images in the video.
